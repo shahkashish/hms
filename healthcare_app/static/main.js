@@ -1,0 +1,181 @@
+document.addEventListener('DOMContentLoaded', () => {
+    const loginForm = document.getElementById('login');
+    const registerForm = document.getElementById('register');
+    const errorAlert = document.getElementById('errorAlert');
+    const patientsSection = document.getElementById('patientsSection');
+    const patientsList = document.getElementById('patientsList');
+
+    // Show error message
+    function showError(message) {
+        errorAlert.textContent = message;
+        errorAlert.style.display = 'block';
+        setTimeout(() => {
+            errorAlert.style.display = 'none';
+        }, 5000);
+    }
+
+    // Show/hide forms
+    function showLogin() {
+        document.getElementById('loginForm').style.display = 'block';
+        document.getElementById('registerForm').style.display = 'none';
+        document.getElementById('patientsSection').style.display = 'none';
+    }
+
+    function showRegister() {
+        document.getElementById('loginForm').style.display = 'none';
+        document.getElementById('registerForm').style.display = 'block';
+        document.getElementById('patientsSection').style.display = 'none';
+    }
+
+    function showPatients() {
+        document.getElementById('loginForm').style.display = 'none';
+        document.getElementById('registerForm').style.display = 'none';
+        document.getElementById('patientsSection').style.display = 'block';
+    }
+
+    // Handle login
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
+
+        try {
+            const response = await fetch('/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    email,
+                    password,
+                    full_name: '',
+                    role: '',
+                    tenant_id: ''
+                }),
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                localStorage.setItem('token', data.access_token);
+                showPatients();
+                fetchPatients();
+            } else {
+                try {
+                    const error = await response.json();
+                    showError(error.detail || error.message || 'Invalid credentials');
+                } catch (e) {
+                    showError('An error occurred. Please try again.');
+                }
+            }
+        } catch (error) {
+            showError('An error occurred during login');
+        }
+    });
+
+    // Handle register
+    registerForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        console.log('Register form submitted');
+        const email = document.getElementById('registerEmail').value;
+        const password = document.getElementById('registerPassword').value;
+        const fullName = document.getElementById('fullName').value;
+        const role = document.getElementById('role').value;
+        const tenantId = document.getElementById('tenantId').value;
+
+        try {
+            const response = await fetch('/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    email,
+                    password,
+                    full_name: fullName,
+                    role,
+                    tenant_id: tenantId
+                }),
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                showLogin();
+                showError('Registration successful! Please login.');
+            } else {
+                try {
+                    const error = await response.json();
+                    showError(error.detail || error.message || 'Registration failed');
+                } catch (e) {
+                    showError('An error occurred. Please try again.');
+                }
+            }
+        } catch (error) {
+            showError('An error occurred during registration');
+        }
+    });
+
+    // Fetch patients
+    async function fetchPatients() {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            showError('Please login first');
+            return;
+        }
+
+        try {
+            const response = await fetch('/patients', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+
+            if (response.ok) {
+                const patients = await response.json();
+                displayPatients(patients);
+            } else {
+                const error = await response.text();
+                showError(error);
+            }
+        } catch (error) {
+            showError('An error occurred while fetching patients');
+        }
+    }
+
+    // Display patients
+    function displayPatients(patients) {
+        patientsList.innerHTML = '';
+        if (patients.length === 0) {
+            patientsList.innerHTML = '<p>No patients found</p>';
+            return;
+        }
+
+        const table = document.createElement('table');
+        table.className = 'table';
+
+        const thead = document.createElement('thead');
+        thead.innerHTML = `
+            <tr>
+                <th>Name</th>
+                <th>Age</th>
+                <th>Gender</th>
+                <th>Admission Date</th>
+            </tr>
+        `;
+        table.appendChild(thead);
+
+        const tbody = document.createElement('tbody');
+        patients.forEach(patient => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${patient.name}</td>
+                <td>${patient.age}</td>
+                <td>${patient.gender}</td>
+                <td>${patient.admission_date}</td>
+            `;
+            tbody.appendChild(row);
+        });
+        table.appendChild(tbody);
+
+        patientsList.appendChild(table);
+    }
+});
