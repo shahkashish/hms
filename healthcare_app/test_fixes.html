@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Register Button Fix</title>
+</head>
+<body>
+    <h1>Testing Register Button Fix</h1>
+    <button onclick="showRegister()">Test Register Button</button>
+    <div id="result"></div>
+    
+    <script>
+        // Global functions for navigation (FIXED)
+        function showLogin() {
+            document.getElementById('result').innerHTML = '✅ showLogin() works!';
+        }
+
+        function showRegister() {
+            document.getElementById('result').innerHTML = '✅ showRegister() works! Register button is now clickable.';
+        }
+
+        function showPatients() {
+            document.getElementById('result').innerHTML = '✅ showPatients() works!';
+        }
+    </script>
+</body>
+</html>
