@@ -58,10 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 },
                 body: JSON.stringify({
                     email,
-                    password,
-                    full_name: '',
-                    role: '',
-                    tenant_id: ''
+                    password
                 }),
             });
 
